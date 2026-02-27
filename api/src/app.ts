@@ -4,6 +4,11 @@ import helmet from 'helmet'
 import compression from 'compression'
 import cookieParser from 'cookie-parser'
 import authRoutes from './modules/auth/auth.routes.js'
+import customerRoutes from './modules/customers/customer.routes.js'
+import {
+  propertyNestedRoutes,
+  propertyFlatRoutes,
+} from './modules/properties/property.routes.js'
 import { errorHandler } from './middleware/error-handler.js'
 
 const app = express()
@@ -23,6 +28,13 @@ app.get('/api/health', (_req, res) => {
 
 // Auth routes (public)
 app.use('/v1/auth', authRoutes)
+
+// Customer routes (authenticated)
+app.use('/v1/customers', customerRoutes)
+
+// Property routes — nested under customers + flat for updates
+app.use('/v1/customers/:customerId/properties', propertyNestedRoutes)
+app.use('/v1/properties', propertyFlatRoutes)
 
 // Error handler (must be last)
 app.use(errorHandler)
