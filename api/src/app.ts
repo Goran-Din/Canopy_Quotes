@@ -9,6 +9,10 @@ import {
   propertyNestedRoutes,
   propertyFlatRoutes,
 } from './modules/properties/property.routes.js'
+import {
+  serviceRoutes,
+  pricingRuleRoutes,
+} from './modules/services/service-catalog.routes.js'
 import { errorHandler } from './middleware/error-handler.js'
 
 const app = express()
@@ -35,6 +39,10 @@ app.use('/v1/customers', customerRoutes)
 // Property routes — nested under customers + flat for updates
 app.use('/v1/customers/:customerId/properties', propertyNestedRoutes)
 app.use('/v1/properties', propertyFlatRoutes)
+
+// Service catalog + pricing routes (authenticated)
+app.use('/v1/services', serviceRoutes)
+app.use('/v1/pricing-rules', pricingRuleRoutes)
 
 // Error handler (must be last)
 app.use(errorHandler)
