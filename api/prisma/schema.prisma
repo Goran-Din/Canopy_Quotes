@@ -7,4 +7,327 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Models will be added as features are built.
+// ────────────────────────────────────────────────────────────────────────
+// ENUMS — B-1 Section 3 (Migration 001) + B-2 Section 3
+// ────────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  n37_super_admin
+  owner
+  division_manager
+  salesperson
+  coordinator
+
+  @@map("user_role")
+}
+
+enum CustomerType {
+  residential
+  commercial
+
+  @@map("customer_type")
+}
+
+enum CustomerStatus {
+  active
+  prospect
+  inactive
+
+  @@map("customer_status")
+}
+
+enum PropertyType {
+  residential
+  commercial
+
+  @@map("property_type")
+}
+
+enum ServiceType {
+  landscaping_maintenance
+  snow_removal
+  hardscape
+  project
+
+  @@map("service_type")
+}
+
+enum QuoteStatus {
+  draft
+  sent
+  approved
+  rejected
+  expired
+  converted
+
+  @@map("quote_status")
+}
+
+enum BillingType {
+  monthly_fixed
+  per_visit
+  per_run
+  project_fixed
+
+  @@map("billing_type")
+}
+
+enum ServiceCategory {
+  landscaping
+  snow
+  hardscape
+  project
+
+  @@map("service_category")
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// MODELS
+// ────────────────────────────────────────────────────────────────────────
+
+/// B-1 Section 5 — One record per client company. Root parent of all data.
+model Tenant {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(255)
+  slug      String   @unique @db.VarChar(100)
+  domain    String?  @db.VarChar(255)
+  isActive  Boolean  @default(true) @map("is_active")
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  users          User[]
+  customers      Customer[]
+  properties     Property[]
+  quotes         Quote[]
+  quoteLineItems QuoteLineItem[]
+  proposals      Proposal[]
+  serviceCatalog ServiceCatalog[]
+  pricingRules   PricingRule[]
+
+  @@map("tenants")
+}
+
+/// B-1 Section 6 — All system users: salespeople, coordinators, division managers, owners.
+model User {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  email        String    @db.VarChar(255)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  firstName    String    @map("first_name") @db.VarChar(100)
+  lastName     String    @map("last_name") @db.VarChar(100)
+  role         UserRole
+  division     String?   @db.VarChar(100)
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant             Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdCustomers   Customer[]
+  createdQuotes      Quote[]
+  generatedProposals Proposal[]
+
+  @@unique([tenantId, email], map: "users_email_tenant_unique")
+  @@index([tenantId], map: "users_tenant_id_idx")
+  @@index([role], map: "users_role_idx")
+  @@map("users")
+}
+
+/// B-1 Section 7 — Customer records managed within Canopy Quotes (Option C architecture).
+model Customer {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String         @map("tenant_id") @db.Uuid
+  name           String         @db.VarChar(255)
+  type           CustomerType
+  status         CustomerStatus @default(prospect)
+  billingEmail   String?        @map("billing_email") @db.VarChar(255)
+  phone          String?        @db.VarChar(50)
+  billingAddress Json?          @map("billing_address")
+  contactName    String?        @map("contact_name") @db.VarChar(255)
+  crmCustomerId  String?        @map("crm_customer_id") @db.Uuid
+  notes          String?
+  createdBy      String         @map("created_by") @db.Uuid
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator    User       @relation(fields: [createdBy], references: [id])
+  properties Property[]
+  quotes     Quote[]
+
+  @@index([tenantId], map: "customers_tenant_idx")
+  @@index([tenantId, name], map: "customers_name_idx")
+  @@index([tenantId, billingEmail], map: "customers_email_idx")
+  @@index([tenantId, phone], map: "customers_phone_idx")
+  @@index([tenantId, status], map: "customers_status_idx")
+  @@index([crmCustomerId], map: "customers_crm_idx")
+  @@map("customers")
+}
+
+/// B-1 Section 8 — Service locations linked to customers. Stores property measurements.
+model Property {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String       @map("tenant_id") @db.Uuid
+  customerId       String       @map("customer_id") @db.Uuid
+  name             String       @db.VarChar(255)
+  address          Json?
+  type             PropertyType
+  lawnAreaSqft     Decimal?     @map("lawn_area_sqft") @db.Decimal(10, 2)
+  parkingAreaSqft  Decimal?     @map("parking_area_sqft") @db.Decimal(10, 2)
+  sidewalkLinearFt Decimal?     @map("sidewalk_linear_ft") @db.Decimal(10, 2)
+  totalAreaSqft    Decimal?     @map("total_area_sqft") @db.Decimal(10, 2)
+  notes            String?
+  googleMapsUrl    String?      @map("google_maps_url")
+  crmPropertyId    String?      @map("crm_property_id") @db.Uuid
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  quotes   Quote[]
+
+  @@index([tenantId], map: "properties_tenant_idx")
+  @@index([customerId], map: "properties_customer_idx")
+  @@index([crmPropertyId], map: "properties_crm_idx")
+  @@map("properties")
+}
+
+/// B-1 Section 9 — One record per pricing proposal. Central table of Canopy Quotes.
+/// Status state machine: draft → sent → approved/rejected/expired → converted
+model Quote {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String      @map("tenant_id") @db.Uuid
+  quoteNumber    String      @map("quote_number") @db.VarChar(50)
+  customerId     String      @map("customer_id") @db.Uuid
+  propertyId     String      @map("property_id") @db.Uuid
+  createdBy      String      @map("created_by") @db.Uuid
+  serviceType    ServiceType @map("service_type")
+  seasonYear     Int?        @map("season_year")
+  status         QuoteStatus @default(draft)
+  billingType    BillingType @map("billing_type")
+  subtotal       Decimal     @default(0.00) @db.Decimal(10, 2)
+  discountPct    Decimal?    @map("discount_pct") @db.Decimal(5, 2)
+  discountAmount Decimal?    @map("discount_amount") @db.Decimal(10, 2)
+  totalAmount    Decimal     @default(0.00) @map("total_amount") @db.Decimal(10, 2)
+  notesInternal  String?     @map("notes_internal")
+  notesClient    String?     @map("notes_client")
+  validUntil     DateTime?   @map("valid_until") @db.Date
+  sentAt         DateTime?   @map("sent_at") @db.Timestamptz(6)
+  approvedAt     DateTime?   @map("approved_at") @db.Timestamptz(6)
+  crmJobId       String?     @map("crm_job_id") @db.Uuid
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant    Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer  Customer        @relation(fields: [customerId], references: [id])
+  property  Property        @relation(fields: [propertyId], references: [id])
+  creator   User            @relation(fields: [createdBy], references: [id])
+  lineItems QuoteLineItem[]
+  proposals Proposal[]
+
+  @@unique([tenantId, quoteNumber], map: "quotes_number_unique")
+  @@index([tenantId], map: "quotes_tenant_idx")
+  @@index([customerId], map: "quotes_customer_idx")
+  @@index([tenantId, status], map: "quotes_status_idx")
+  @@index([tenantId, createdBy], map: "quotes_creator_idx")
+  @@index([tenantId, serviceType], map: "quotes_service_type_idx")
+  @@index([tenantId, sentAt], map: "quotes_sent_at_idx")
+  @@index([crmJobId], map: "quotes_crm_job_idx")
+  @@map("quotes")
+}
+
+/// B-1 Section 10 — One record per service in a quote. Snapshot of pricing at creation time.
+model QuoteLineItem {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  quoteId          String   @map("quote_id") @db.Uuid
+  serviceCatalogId String?  @map("service_catalog_id") @db.Uuid
+  serviceName      String   @map("service_name") @db.VarChar(255)
+  description      String?
+  quantity         Decimal  @db.Decimal(10, 2)
+  unit             String   @db.VarChar(50)
+  unitPrice        Decimal  @map("unit_price") @db.Decimal(10, 2)
+  lineTotal        Decimal  @map("line_total") @db.Decimal(10, 2)
+  frequency        String?  @db.VarChar(100)
+  sortOrder        Int      @default(0) @map("sort_order")
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  quote          Quote           @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  serviceCatalog ServiceCatalog? @relation(fields: [serviceCatalogId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId], map: "qli_tenant_idx")
+  @@index([quoteId], map: "qli_quote_idx")
+  @@index([serviceCatalogId], map: "qli_catalog_idx")
+  @@index([quoteId, sortOrder], map: "qli_sort_order_idx")
+  @@map("quote_line_items")
+}
+
+/// B-1 Section 11 — PDF proposal document records. R2 key used for signed URL generation.
+model Proposal {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  quoteId       String   @map("quote_id") @db.Uuid
+  version       Int      @default(1)
+  r2Key         String   @map("r2_key")
+  fileSizeBytes Int?     @map("file_size_bytes")
+  generatedAt   DateTime @default(now()) @map("generated_at") @db.Timestamptz(6)
+  generatedBy   String   @map("generated_by") @db.Uuid
+  isCurrent     Boolean  @default(true) @map("is_current")
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  quote     Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  generator User   @relation(fields: [generatedBy], references: [id])
+
+  @@index([tenantId], map: "proposals_tenant_idx")
+  @@index([quoteId], map: "proposals_quote_idx")
+  @@index([quoteId, isCurrent], map: "proposals_current_idx")
+  @@map("proposals")
+}
+
+/// B-2 Section 4 — Services available for quoting. Pricing formula in JSONB. Owner-managed.
+model ServiceCatalog {
+  id                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId            String          @map("tenant_id") @db.Uuid
+  name                String          @db.VarChar(255)
+  category            ServiceCategory
+  billingUnit         String          @map("billing_unit") @db.VarChar(50)
+  basePricePerUnit    Decimal?        @map("base_price_per_unit") @db.Decimal(10, 4)
+  pricingFormula      Json            @default("{}") @map("pricing_formula")
+  minPrice            Decimal?        @map("min_price") @db.Decimal(10, 2)
+  descriptionTemplate String?         @map("description_template")
+  isActive            Boolean         @default(true) @map("is_active")
+  sortOrder           Int             @default(0) @map("sort_order")
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant    Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lineItems QuoteLineItem[]
+
+  @@unique([tenantId, name], map: "service_catalog_name_unique")
+  @@index([tenantId], map: "service_catalog_tenant_idx")
+  @@index([tenantId, category], map: "service_catalog_category_idx")
+  @@index([tenantId, isActive], map: "service_catalog_active_idx")
+  @@index([tenantId, sortOrder], map: "service_catalog_sort_idx")
+  @@map("service_catalog")
+}
+
+/// B-2 Section 7 — Tenant-level pricing modifiers applied on top of service_catalog formulas.
+model PricingRule {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  name            String    @db.VarChar(255)
+  ruleType        String    @map("rule_type") @db.VarChar(50)
+  adjustmentValue Decimal   @map("adjustment_value") @db.Decimal(10, 4)
+  appliesTo       Json      @default("{}") @map("applies_to")
+  isActive        Boolean   @default(true) @map("is_active")
+  validFrom       DateTime? @map("valid_from") @db.Date
+  validUntil      DateTime? @map("valid_until") @db.Date
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId], map: "pricing_rules_tenant_idx")
+  @@index([tenantId, isActive], map: "pricing_rules_active_idx")
+  @@map("pricing_rules")
+}
