@@ -128,10 +128,27 @@ model User {
   createdQuotes      Quote[]
   generatedProposals Proposal[]
 
+  refreshTokens  RefreshToken[]
+
   @@unique([tenantId, email], map: "users_email_tenant_unique")
   @@index([tenantId], map: "users_tenant_id_idx")
   @@index([role], map: "users_role_idx")
   @@map("users")
+}
+
+/// Refresh tokens stored in DB for revocation support. One per device/session.
+model RefreshToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique @db.VarChar(500)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "refresh_tokens_user_idx")
+  @@index([expiresAt], map: "refresh_tokens_expires_idx")
+  @@map("refresh_tokens")
 }
 
 /// B-1 Section 7 — Customer records managed within Canopy Quotes (Option C architecture).
