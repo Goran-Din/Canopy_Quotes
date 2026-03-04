@@ -4,6 +4,9 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'import.meta.env.VITE_API_URL': JSON.stringify('https://staging-api-quotes.sunsetapp.us')
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
