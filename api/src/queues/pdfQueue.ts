@@ -1,12 +1,9 @@
 import Bull from 'bull';
 import { PdfJobData } from '../types/pdf.types.js';
 
-export const pdfQueue = new Bull<PdfJobData>('pdf-generation', {
-  redis: {
-    host: process.env.REDIS_HOST ?? 'localhost',
-    port: parseInt(process.env.REDIS_PORT ?? '6379'),
-    password: process.env.REDIS_PASSWORD,
-  },
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+
+export const pdfQueue = new Bull<PdfJobData>('pdf-generation', redisUrl, {
   defaultJobOptions: {
     attempts: 3,
     backoff: {
@@ -18,7 +15,7 @@ export const pdfQueue = new Bull<PdfJobData>('pdf-generation', {
   },
 });
 
-// Log queue-level errors (not job-level)
+// Log queue-level errors but do NOT crash the server
 pdfQueue.on('error', (err) => {
-  console.error('[PdfQueue] Queue error:', err);
+  console.error('[PdfQueue] Queue error (non-fatal):', err.message);
 });

@@ -20,11 +20,10 @@ import { scheduleExpireQuotesJob } from './jobs/expireQuotesJob.js'
 import { db } from './config/database.js'
 import { createClient } from 'redis'
 
-const redis = createClient({
-  url: `redis://${process.env.REDIS_HOST ?? 'localhost'}:${process.env.REDIS_PORT ?? '6379'}`,
-  password: process.env.REDIS_PASSWORD,
-})
-redis.connect().catch(console.error)
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
+const redis = createClient({ url: redisUrl })
+redis.on('error', (err) => console.error('[Redis] Client error:', err))
+redis.connect().catch((err) => console.error('[Redis] Connection failed (non-fatal):', err))
 import quoteRoutes from './modules/quotes/quote.routes.js'
 import { errorHandler } from './middleware/error-handler.js'
 

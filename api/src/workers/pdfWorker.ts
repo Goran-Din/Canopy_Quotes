@@ -19,10 +19,8 @@ const db = new Pool({
 });
 
 // ── Redis client (for storing job results for polling) ────────────────────────
-const redis = createClient({
-  url: `redis://${process.env.REDIS_HOST ?? 'localhost'}:${process.env.REDIS_PORT ?? '6379'}`,
-  password: process.env.REDIS_PASSWORD,
-});
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const redis = createClient({ url: redisUrl });
 
 redis.on('error', (err) => console.error('[PdfWorker] Redis client error:', err));
 
