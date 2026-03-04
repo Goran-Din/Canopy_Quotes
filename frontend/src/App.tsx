@@ -21,7 +21,7 @@ const queryClient = new QueryClient({
 
 // ── Auth guard ────────────────────────────────────────────────────────────────
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthenticated = useAuthStore((s: { isAuthenticated: boolean }) => s.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
