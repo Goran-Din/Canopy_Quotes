@@ -172,3 +172,31 @@ export async function refresh(token: string) {
 export async function logout(token: string) {
   await prisma.refreshToken.deleteMany({ where: { token } })
 }
+
+export async function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { passwordHash: true },
+  })
+
+  if (!user) {
+    return { error: 'NOT_FOUND' as const }
+  }
+
+  const valid = await verifyPassword(currentPassword, user.passwordHash)
+  if (!valid) {
+    return { error: 'INVALID_CURRENT_PASSWORD' as const }
+  }
+
+  const newHash = await hashPassword(newPassword)
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: newHash },
+  })
+
+  return { success: true as const }
+}

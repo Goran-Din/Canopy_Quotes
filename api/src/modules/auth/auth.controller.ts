@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import { LoginSchema } from './auth.schema.js'
+import { LoginSchema, ChangePasswordSchema } from './auth.schema.js'
 import * as authService from './auth.service.js'
 
 const COOKIE_NAME = 'refreshToken'
@@ -100,4 +100,39 @@ export async function logoutHandler(req: Request, res: Response) {
   clearRefreshCookie(res)
 
   res.json({ message: 'Logged out' })
+}
+
+export async function changePasswordHandler(req: Request, res: Response) {
+  const parsed = ChangePasswordSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(422).json({
+      error: 'VALIDATION_ERROR',
+      message: 'Invalid request body',
+      fields: parsed.error.flatten().fieldErrors,
+    })
+    return
+  }
+
+  const result = await authService.changePassword(
+    req.user!.sub,
+    parsed.data.current_password,
+    parsed.data.new_password,
+  )
+
+  if ('error' in result) {
+    if (result.error === 'INVALID_CURRENT_PASSWORD') {
+      res.status(401).json({
+        error: 'UNAUTHORIZED',
+        message: 'Current password is incorrect.',
+      })
+      return
+    }
+    res.status(404).json({
+      error: 'NOT_FOUND',
+      message: 'User not found.',
+    })
+    return
+  }
+
+  res.json({ message: 'Password changed successfully.' })
 }
