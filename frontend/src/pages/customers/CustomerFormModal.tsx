@@ -101,9 +101,9 @@ export default function CustomerFormModal({
     try {
       let result: Customer;
       if (isEdit) {
-        result = await updateMutation.mutateAsync(payload);
+        result = await updateMutation.mutateAsync(payload as unknown as Partial<NewCustomerForm>);
       } else {
-        result = await createMutation.mutateAsync(payload);
+        result = await createMutation.mutateAsync(payload as unknown as NewCustomerForm);
       }
       onSuccess(result);
     } catch {
