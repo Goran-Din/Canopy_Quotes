@@ -55,14 +55,7 @@ const CATEGORIES: { value: ServiceCategory; label: string; icon: React.ReactNode
   { value: 'project', label: 'Project', icon: <ClipboardList size={16} className="text-purple-400" /> },
 ];
 
-function categoryLabel(cat: ServiceCategory) {
-  return CATEGORIES.find((c) => c.value === cat)?.label ?? cat;
-}
-function categoryIcon(cat: ServiceCategory) {
-  return CATEGORIES.find((c) => c.value === cat)?.icon;
-}
-
-function formulaBadge(f: PricingFormula, minPrice: number | null) {
+function formulaBadge(f: PricingFormula, _minPrice: number | null) {
   const typeLabel: Record<FormulaType, string> = {
     flat_rate_sqft: 'flat sqft',
     tiered_sqft: 'tiered sqft',

@@ -2,7 +2,7 @@
 // Canopy Quotes – Service Add/Edit Form with Formula Builder
 // ============================================================
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, X, Loader2, AlertCircle } from 'lucide-react';
 import { api } from '../../lib/api';
 import type { CatalogService, FormulaType, ServiceCategory, PricingTier, PricingFormula } from './CatalogPage';

@@ -275,10 +275,10 @@ export default function PropertyFormModal({
           </button>
           <button
             onClick={handleSubmit as any}
-            disabled={mutation.isLoading}
+            disabled={mutation.isPending}
             className="rounded-lg bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
           >
-            {mutation.isLoading ? 'Adding…' : 'Add Property'}
+            {mutation.isPending ? 'Adding…' : 'Add Property'}
           </button>
         </div>
       </div>

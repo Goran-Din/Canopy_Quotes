@@ -3,7 +3,7 @@
 // Tabs: Users (owner only) | My Account
 // ============================================================
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Users, User, Plus, Edit2, Ban, RefreshCw, X, Loader2,

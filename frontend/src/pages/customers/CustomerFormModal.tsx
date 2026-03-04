@@ -37,7 +37,7 @@ export default function CustomerFormModal({
 
   const createMutation = useCreateCustomer();
   const updateMutation = useUpdateCustomer(customer?.id ?? '');
-  const isLoading = createMutation.isLoading || updateMutation.isLoading;
+  const isLoading = createMutation.isPending || updateMutation.isPending;
   const apiError = createMutation.error || updateMutation.error;
 
   // Pre-fill form when editing

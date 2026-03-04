@@ -2,7 +2,7 @@
 // Canopy Quotes – Step 4: Measurements & Live Pricing
 // ============================================================
 
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { useQuoteWizardStore } from '../../store/quoteWizardStore';
 import { api } from '../../lib/api';
@@ -16,10 +16,8 @@ function fmt(n: number) {
 // ─── Single service pricing row ───────────────────────────
 function ServiceRow({
   item,
-  index,
 }: {
   item: WizardLineItem;
-  index: number;
 }) {
   const updateLineItem = useQuoteWizardStore((s) => s.updateLineItem);
   const [calcLoading, setCalcLoading] = useState(false);
@@ -282,8 +280,8 @@ export default function Step4Pricing() {
 
       {/* Service rows */}
       <div className="space-y-4">
-        {lineItems.map((item, idx) => (
-          <ServiceRow key={item.service_catalog_id} item={item} index={idx} />
+        {lineItems.map((item) => (
+          <ServiceRow key={item.service_catalog_id} item={item} />
         ))}
       </div>
 

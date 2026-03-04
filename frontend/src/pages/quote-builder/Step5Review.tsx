@@ -2,7 +2,7 @@
 // Canopy Quotes – Step 5: Review & Send
 // ============================================================
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   FileText, Mail, Check, Loader2, AlertCircle,
   ExternalLink, RefreshCw, Edit2, Download, Save

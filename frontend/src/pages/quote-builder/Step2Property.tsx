@@ -2,7 +2,7 @@
 // Canopy Quotes – Step 2: Property Selection
 // ============================================================
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { MapPin, Check, Plus, X, Loader2, AlertCircle } from 'lucide-react';
 import { useQuoteWizardStore } from '../../store/quoteWizardStore';
 import { useCustomerProperties } from '../customers/hooks';

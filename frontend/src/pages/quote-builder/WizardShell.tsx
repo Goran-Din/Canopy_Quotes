@@ -19,8 +19,6 @@ const STEPS = [
 export function StepIndicator() {
   const currentStep = useQuoteWizardStore((s) => s.currentStep);
   const goToStep = useQuoteWizardStore((s) => s.goToStep);
-  const quoteId = useQuoteWizardStore((s) => s.quoteId);
-
   return (
     <div className="flex items-center justify-center gap-0">
       {STEPS.map((step, idx) => {

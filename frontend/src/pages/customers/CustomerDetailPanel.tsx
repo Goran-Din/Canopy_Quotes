@@ -2,7 +2,7 @@
 // Canopy Quotes – Customer Detail Panel (slide-out)
 // ============================================================
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   X,
   MapPin,
@@ -16,7 +16,7 @@ import {
   Loader2,
   ChevronRight,
 } from 'lucide-react';
-import type { Customer } from './types';
+
 import { useCustomer, useCustomerProperties, useCustomerQuotes } from './hooks';
 import PropertyFormModal from './PropertyFormModal';
 import CustomerFormModal from './CustomerFormModal';

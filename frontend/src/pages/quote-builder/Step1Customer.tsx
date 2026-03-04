@@ -2,7 +2,7 @@
 // Canopy Quotes – Step 1: Customer Selection
 // ============================================================
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Search, Check, Building2, Home, Plus, X, Loader2, AlertCircle } from 'lucide-react';
 import { useQuoteWizardStore } from '../../store/quoteWizardStore';
 import { useCustomerSearch } from '../customers/hooks';

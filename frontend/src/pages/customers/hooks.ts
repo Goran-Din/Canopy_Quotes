@@ -2,7 +2,7 @@
 // Canopy Quotes – Customer API Hooks (React Query)
 // ============================================================
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import apiClient from '../../api/client';
 import type {
   Customer,
@@ -25,7 +25,7 @@ export function useCustomers(filters: CustomerFilters) {
     queryKey: ['customers', filters],
     queryFn: () => apiClient.get(`/customers?${params.toString()}`).then(r => r.data),
     staleTime: 30_000,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 }
 

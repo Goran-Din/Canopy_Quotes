@@ -3,7 +3,6 @@
 // ============================================================
 
 import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuoteWizardStore } from '../../store/quoteWizardStore';
 import { api } from '../../lib/api';
 import type { WizardLineItem } from './types';
@@ -15,10 +14,6 @@ import Step4Pricing from './Step4Pricing';
 import Step5Review from './Step5Review';
 
 export default function QuoteBuilderPage() {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const prefilledCustomerId = searchParams.get('customerId');
-
   const {
     currentStep,
     customer,
