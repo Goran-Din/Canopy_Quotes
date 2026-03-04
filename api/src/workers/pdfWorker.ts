@@ -28,6 +28,10 @@ redis.on('error', (err) => console.error('[PdfWorker] Redis client error:', err)
 
 // ── Service wiring ─────────────────────────────────────────────────────────────
 const r2Client = createR2Client();
+if (!r2Client) {
+  console.warn('[PdfWorker] R2 not configured — worker will not start');
+  process.exit(0);
+}
 const proposalRepo = new ProposalRepository(db);
 const pdfService = new PdfService(proposalRepo, r2Client, db);
 

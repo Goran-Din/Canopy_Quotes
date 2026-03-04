@@ -35,7 +35,7 @@ const STATUS_CHANGE_ROLES: string[] = ['owner', 'division_manager', 'n37_super_a
 export class DashboardService {
   constructor(
     private dashboardRepo: DashboardRepository,
-    private emailService: EmailService,
+    private emailService: EmailService | null,
     _db: Pool
   ) {}
 
@@ -108,10 +108,12 @@ export class DashboardService {
     await this.dashboardRepo.updateStatus(tenantId, quoteId, newStatus, changedBy);
 
     // Send status alert email (fire-and-forget — errors logged internally)
-    try {
-      await this.emailService.sendQuoteStatusAlert(tenantId, quoteId, newStatus, changedBy);
-    } catch (err) {
-      console.error('[DashboardService] Status alert email failed (non-fatal):', err);
+    if (this.emailService) {
+      try {
+        await this.emailService.sendQuoteStatusAlert(tenantId, quoteId, newStatus, changedBy);
+      } catch (err) {
+        console.error('[DashboardService] Status alert email failed (non-fatal):', err);
+      }
     }
   }
 

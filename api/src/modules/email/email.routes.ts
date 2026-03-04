@@ -14,8 +14,18 @@ import { createR2Client } from '../../config/r2Client.js';
 export function createEmailRoutes(db: Pool): Router {
   const router = Router();
 
-  // Wire dependencies
   const r2Client = createR2Client();
+
+  if (!r2Client) {
+    router.use(authenticate);
+    const unavailable = (_req: Request, res: Response) => {
+      res.status(503).json({ error: 'PDF storage not configured' });
+    };
+    router.post('/:id/send', unavailable);
+    router.post('/:id/resend', unavailable);
+    return router;
+  }
+
   const proposalRepo = new ProposalRepository(db);
   const pdfService = new PdfService(proposalRepo, r2Client, db);
   const emailService = new EmailService(pdfService, proposalRepo, db);

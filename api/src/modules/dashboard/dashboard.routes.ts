@@ -23,8 +23,8 @@ export function createDashboardRoutes(db: Pool): Router {
   const r2Client = createR2Client();
   const dashboardRepo = new DashboardRepository(db);
   const proposalRepo = new ProposalRepository(db);
-  const pdfService = new PdfService(proposalRepo, r2Client, db);
-  const emailService = new EmailService(pdfService, proposalRepo, db);
+  const pdfService = r2Client ? new PdfService(proposalRepo, r2Client, db) : null;
+  const emailService = pdfService ? new EmailService(pdfService, proposalRepo, db) : null;
   const dashboardService = new DashboardService(dashboardRepo, emailService, db);
   const controller = new DashboardController(dashboardService);
 

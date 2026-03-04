@@ -5,7 +5,7 @@ import { S3Client } from '@aws-sdk/client-s3';
  * R2 is S3-compatible. Uses AWS SDK v3.
  * In local dev mode, returns a dummy client (local filesystem is used instead).
  */
-export function createR2Client(): S3Client {
+export function createR2Client(): S3Client | null {
   const accountId = process.env.R2_ACCOUNT_ID ?? '';
   const accessKeyId = process.env.R2_ACCESS_KEY_ID ?? '';
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY ?? '';
@@ -18,7 +18,8 @@ export function createR2Client(): S3Client {
   }
 
   if (!accountId || !accessKeyId || !secretAccessKey) {
-    throw new Error('R2 credentials not configured. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY');
+    console.warn('[R2Client] R2 credentials not configured — PDF storage disabled');
+    return null;
   }
 
   return new S3Client({
